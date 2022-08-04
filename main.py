@@ -5,6 +5,7 @@ from tkinter import filedialog
 import os
 from encrypt import encrypt
 from decrypt import decrypt
+from utils import readFile, writeFile
 
 root = Tk()
 root.title("Encryption Toolkits")
@@ -13,6 +14,10 @@ root.resizable(False, False)
 directoryHistory = "/Users/jerry/Desktop/"
 
 # Logics
+def updateProcess(msg):
+    processLabel.config(text=msg)
+    root.update()
+
 def getFile(chooseFor):
     global directoryHistory
     if (chooseFor == "src"):
@@ -29,6 +34,7 @@ def getFile(chooseFor):
         dstEntry.insert(0, response)
         directoryHistory = response if len(response) > 0 else directoryHistory
 
+
 def encryptFile():
     src = srcEntry.get()
     dst = dstEntry.get()
@@ -39,14 +45,26 @@ def encryptFile():
         messagebox.showerror(title="destination error", message="Destination folder does not exist")
         return
 
-    dst, content = encrypt(src, dst)
+    # Read file
+    updateProcess("Reading source file...")
+    content = readFile(src)
+
+    # Encryption
+    updateProcess("Encrypting data...")
+    dst, content = encrypt(content, src, dst)
+
+    # Save result
+    updateProcess("Saving encrypted file...")
     if os.path.exists(dst):
         response = messagebox.askyesno(title="File confliction", message=f"File {dst} already exists.\nDo you want to replace it?")
         if not response:
+            updateProcess("")
             return
-    with open(dst, 'wb') as fh:
-        fh.write(content)
+    writeFile(content, dst)
+
+    updateProcess("Done!")
     messagebox.showinfo(message=f"Successfully encrypted {src} to {dst}")
+    updateProcess("")
 
 
 def decryptFile():
@@ -62,14 +80,25 @@ def decryptFile():
         messagebox.showerror(title="file error", message="Decrypted file must have .encr extension")
         return
 
-    dst, content = decrypt(src, dst)
+    # Read file
+    updateProcess("Reading source file...")
+    content = readFile(src)
+
+    # Decryption
+    updateProcess("Decrypting data...")
+    dst, content = decrypt(content, dst)
+
+    # Save result
     if os.path.exists(dst):
         response = messagebox.askyesno(title="File confliction", message=f"File {dst} already exists.\nDo you want to replace it?")
         if not response:
+            updateProcess("")
             return
-    with open(dst, 'wb') as fh:
-        fh.write(content)
+    writeFile(content, dst)
+
+    updateProcess("Done!")
     messagebox.showinfo(message=f"Successfully decrypted {src} to {dst}")
+    updateProcess("")
 
 
 def action():
@@ -100,7 +129,7 @@ actionChoice.set("encr")
 chooseEncrButton = Radiobutton(root, value="encr", variable=actionChoice)
 chooseDecrButton = Radiobutton(root, value="decr", variable=actionChoice)
 goButton = Button(root, text="go!", width=4, height=1,command=action)
-
+processLabel = Label(root, width=30)
 
 # Placement
 titleLabel.place(relx=.5, rely=.1, anchor="center")
@@ -113,11 +142,12 @@ dstText.place(relx=.1, rely=.5, anchor="center")
 dstEntry.place(relx=.5, rely=.51, anchor="center")
 chooseDstButton.place(relx=.9, rely=.5, anchor="center")
 
-EncrChoiseLabel.place(relx=.35, rely=.75, anchor="center")
-DecrChoiseLabel.place(relx=.65, rely=.75, anchor="center")
-chooseEncrButton.place(relx=.35, rely=.7,anchor="center")
-chooseDecrButton.place(relx=.65, rely=.7,anchor="center")
+EncrChoiseLabel.place(relx=.35, rely=.7, anchor="center")
+DecrChoiseLabel.place(relx=.65, rely=.7, anchor="center")
+chooseEncrButton.place(relx=.35, rely=.65,anchor="center")
+chooseDecrButton.place(relx=.65, rely=.65,anchor="center")
 
-goButton.place(relx=.5, rely=.85,anchor="center")
+goButton.place(relx=.5, rely=.8,anchor="center")
+processLabel.place(relx=.5, rely=.9,anchor="center")
 
 root.mainloop()

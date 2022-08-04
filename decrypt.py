@@ -1,17 +1,14 @@
-from fileinput import filename
 from cryptography.fernet import Fernet
 import sys
 import os
-import json
+import pickle
 import base64
+from utils import readFile, writeFile
 
-def decrypt(src, dst):
-    with open(src, 'rb') as fh:
-        content = fh.read()
-        
-    content = json.loads(base64.b64decode(content))
+def decrypt(content, dst):    
+    content = pickle.loads(base64.b64decode(content))
     dst = os.path.join(dst, content["filename"])
-    content = Fernet(content["key"].encode("utf-8")).decrypt(content["data"].encode("utf-8"))
+    content = Fernet(content["key"]).decrypt(content["data"])
     
     return dst, content
 
@@ -25,10 +22,10 @@ if __name__ == "__main__":
     dst = sys.argv[2]
 
     if not os.path.exists(src):
-        raise ValueError("Source folder does not exist")
+        raise ValueError("Source file does not exist")
     if not os.path.exists(dst):
         raise ValueError("Destination folder does not exist")
 
-    dst, content = decrypt(src, dst)
-    with open(dst, 'wb') as fh:
-        fh.write(content)
+    content = readFile(src)
+    dst, content = decrypt(content, dst)
+    writeFile(content, dst)
